@@ -56,6 +56,52 @@ As I use sqlite for this example, just the dsn is sufficient.
 The following service defined in the file allows to [authenticate](https://github.com/mendoframework/auth) a user against a database.
 It depends on a PDO instance, thus we add our previous defined pdo service as a dependency to the authenticator service.
 
+Below is an example of a service provider:
+```php
+namespace Mendo\Pdo\Provider\Pimple;
+
+use Pimple\Container;
+use Pimple\ServiceProviderInterface;
+use Mendo\Pdo\LazyPdo;
+
+class PdoServiceProvider implements ServiceProviderInterface
+{
+    private $reference;
+
+    public function __construct($reference = 'pdo')
+    {
+        $this->reference = $reference;
+    }
+
+    public function register(Container $container)
+    {
+        $reference = $this->reference;
+
+        $container[$reference.'.lazy'] = true;
+        $container[$reference.'.username'] = null;
+        $container[$reference.'.password'] = null;
+        $container[$reference.'.options'] = array();
+
+        $container[$reference] = function ($c) use ($reference) {
+            if (empty($c[$reference.'.dsn'])) {
+                throw new \Exception('dsn not specified');
+            }
+
+            $dsn = $c[$reference.'.dsn'];
+            $username = $c[$reference.'.username'];
+            $password = $c[$reference.'.password'];
+            $options = $c[$reference.'.options'];
+
+            if ($c[$reference.'.lazy']) {
+                return new LazyPdo($dsn, $username, $password, $options);
+            }
+
+            return new \PDO($dsn, $username, $password, $options);
+        };
+    }
+}
+```
+
 The services are registered through the Registrar, and can then be accessed from the container:
 ```php
 $auth = $container['auth.adapter'];
