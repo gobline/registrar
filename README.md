@@ -61,4 +61,4 @@ The services are registered through the Registrar, and can then be accessed from
 $auth = $container['auth.adapter'];
 ```
 
-If the environment has not explicitly been specified, the Registrar will set it automatically to "dev" if the server is running locally, "prod" otherwise:
+If the environment has not explicitly been specified when instantiating the Registrar, the Registrar will set it automatically to "dev" if the server is running locally, "prod" otherwise.
