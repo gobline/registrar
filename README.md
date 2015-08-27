@@ -6,7 +6,7 @@ It loads the right configuration files based on the current environment (dev, pr
 ```php
 $container = new Pimple\Container();
 
-$registrar = new Mendo\Dic\Registrar($container, 'dev');
+$registrar = new Mendo\Registrar\Registrar($container, 'dev');
 $registrar->register(getcwd().'/config/services');
 ```
 
@@ -62,6 +62,3 @@ $auth = $container['auth.adapter'];
 ```
 
 If the environment has not explicitly been specified, the Registrar will set it automatically to "dev" if the server is running locally, "prod" otherwise:
-```php
-$registrar = new Mendo\Dic\Registrar(new Pimple\Container());
-```
