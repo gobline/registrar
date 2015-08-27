@@ -104,7 +104,7 @@ class PdoServiceProvider implements ServiceProviderInterface
 
 The services are registered through the Registrar, and can then be accessed from the container:
 ```php
-$auth = $container['auth.adapter'];
+$db = $container['pdo'];
 ```
 
 If the environment has not explicitly been specified when instantiating the Registrar, the Registrar will set it automatically to "dev" if the server is running locally, "prod" otherwise.
