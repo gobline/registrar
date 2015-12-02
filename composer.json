@@ -1,6 +1,6 @@
 {
-    "name": "mendoframework/registrar",
-    "description": "Mendo Registrar Component",
+    "name": "gobline/registrar",
+    "description": "Registrar component",
     "license": "BSD-3-Clause",
     "authors": [
         {
@@ -9,13 +9,13 @@
         }
     ],
     "keywords": [
-        "mf", "mendoframework", "mendo framework",
+        "gobline", 
         "registrar", "dependency injection"
     ],
-    "homepage": "https://github.com/mendoframework",
+    "homepage": "https://github.com/gobline",
     "autoload": {
         "psr-4": {
-            "Mendo\\Registrar\\": "src/"
+            "Gobline\\Registrar\\": "src/"
         }
     },
     "require": {

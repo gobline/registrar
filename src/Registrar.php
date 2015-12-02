@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Mendo Framework
+ * Gobline Framework
  *
  * (c) Mathieu Decaffmeyer <mdecaffmeyer@gmail.com>
  *
@@ -9,9 +9,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Mendo\Registrar;
+namespace Gobline\Registrar;
 
-use Pimple\Container;
+use Gobline\Container\ContainerInterface;
 
 /**
  * @author Mathieu Decaffmeyer <mdecaffmeyer@gmail.com>
@@ -21,13 +21,12 @@ class Registrar
     private $environment;
     private $container;
 
-    public function __construct(Container $container, $environment = null)
+    public function __construct(ContainerInterface $container, $environment = null)
     {
         $environment = (string) $environment;
         $this->environment = $environment ?: ($this->isLocalHost() ? 'dev' : 'prod');
 
         $this->container = $container;
-        $this->container['environment'] = $this->environment;
     }
 
     private function isLocalHost()
@@ -39,38 +38,50 @@ class Registrar
     {
         $services = [];
 
-        if (is_file($file.'.base.php')) {
-            $services = array_merge($services, include $file.'.base.php');
+        if (!is_file($file)) {
+            throw new \RuntimeException('Configuration file "'.$file.'" not found');
         }
 
-        if (is_file($file.'.'.$this->environment.'.php')) {
-            $services = array_merge($services, include $file.'.'.$this->environment.'.php');
+        $services = array_merge($services, include $file);
+
+        $file = preg_replace('/\.php$/', '', $file).'.'.$this->environment.'.php';
+
+        if (is_file($file)) {
+            $services = array_merge($services, include $file);
         }
 
         foreach ($services as $service => $config) {
-            if (empty($config['serviceProvider'])) {
-                throw new \Exception('Service provider not specified');
+            if (!$config) {
+                $this->container->register($service);
             }
 
-            $dependencies = isset($config['dependencies']) ? $config['dependencies'] : [];
-            $parameters = isset($config['parameters']) ? $config['parameters'] : [];
+            $alias = isset($config['alias']) ? $config['alias'] : null;
 
-            $parameters = array_merge($dependencies, $parameters);
-            $serviceParameters = [];
-
-            foreach ($parameters as $key => $value) {
-                $serviceParameters[$service.'.'.$key] = $value;
+            if ($alias) {
+                $this->container->alias($alias, $service);
             }
 
-            $serviceProvider = $config['serviceProvider'];
-            $this->container->register(new $serviceProvider($service), $serviceParameters);
+            $extend = isset($config['extend']) ? $config['extend'] : false;
+
+            if (!$extend) {
+                $construct = isset($config['construct']) ? $config['construct'] : [];
+                $shared = isset($construct['shared']) ? $construct['shared'] : true;
+                $factory = isset($construct['factory']) ? $construct['factory'] : null;
+                $arguments = isset($construct['arguments']) ? $construct['arguments'] : [];
+
+                $this->container->register($service, $factory, $arguments, $shared);
+            }
+
+            $configure = isset($config['configure']) ? $config['configure'] : null;
+
+            if ($configure) {
+                $configurator = isset($configure['configurator']) ? $configure['configurator'] : null;
+                $data = isset($configure['data']) ? $configure['data'] : [];
+
+                $this->container->configure($service, $configurator, $data);
+            }
         }
 
         return $this;
-    }
-
-    public function getContainer() 
-    {
-        return $this->container;
     }
 }
