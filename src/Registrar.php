@@ -50,26 +50,26 @@ class Registrar
             $services = array_merge($services, include $file);
         }
 
-        foreach ($services as $service => $config) {
-            if (!$config) {
-                $this->container->register($service);
-            }
-
+        foreach ($services as $serviceClassName => $config) {
             $alias = isset($config['alias']) ? $config['alias'] : null;
 
             if ($alias) {
-                $this->container->alias($alias, $service);
+                $this->container->alias($alias, $serviceClassName);
             }
 
-            $extend = isset($config['extend']) ? $config['extend'] : false;
+            $register = !$this->container->has($serviceClassName) || isset($config['construct']);
 
-            if (!$extend) {
+            if ($register) {
                 $construct = isset($config['construct']) ? $config['construct'] : [];
                 $shared = isset($construct['shared']) ? $construct['shared'] : true;
                 $factory = isset($construct['factory']) ? $construct['factory'] : null;
-                $arguments = isset($construct['arguments']) ? $construct['arguments'] : [];
+                $arguments = isset($construct['arguments']) ? $construct['arguments'] : null;
 
-                $this->container->register($service, $factory, $arguments, $shared);
+                if ($factory) {
+                    $this->container->delegate($serviceClassName, $factory, $arguments, $shared);
+                } else {
+                    $this->container->set($serviceClassName, $arguments, $shared);
+                }
             }
 
             $configure = isset($config['configure']) ? $config['configure'] : null;
@@ -78,7 +78,7 @@ class Registrar
                 $configurator = isset($configure['configurator']) ? $configure['configurator'] : null;
                 $data = isset($configure['data']) ? $configure['data'] : [];
 
-                $this->container->configure($service, $configurator, $data);
+                $this->container->configure($serviceClassName, $configurator, $data);
             }
         }
 
